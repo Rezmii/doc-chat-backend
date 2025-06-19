@@ -1,0 +1,22 @@
+# docker-compose.yml
+version: "3.8"
+services:
+  postgres:
+    image: postgres:14-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=d_user
+      - POSTGRES_PASSWORD=d_password
+      - POSTGRES_DB=doc-chat-db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U d_user -d doc-chat-db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
