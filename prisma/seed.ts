@@ -1,3 +1,4 @@
+// prisma/seed.ts
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -5,7 +6,17 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Rozpoczynanie seedingu...");
 
-  const doctorUser1 = await prisma.user.create({
+  // --- KROK 1: Czyszczenie istniejących danych ---
+  console.log("Czyszczenie bazy danych...");
+  await prisma.review.deleteMany();
+  await prisma.doctor.deleteMany();
+  await prisma.user.deleteMany();
+
+  // --- KROK 2: Dodawanie nowych lekarzy ---
+  console.log("Dodawanie nowych lekarzy...");
+
+  // Neurologowie
+  await prisma.user.create({
     data: {
       email: "anna.kowalska@med.app",
       name: "dr n. med. Anna Kowalska",
@@ -15,12 +26,14 @@ async function main() {
         create: {
           specialty: "Neurolog",
           bio: "Absolwentka Warszawskiego Uniwersytetu Medycznego z 15-letnim doświadczeniem w leczeniu migren i zaburzeń snu.",
+          photoUrl:
+            "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?q=80&w=2070&auto=format&fit=crop",
         },
       },
     },
   });
 
-  const doctorUser2 = await prisma.user.create({
+  await prisma.user.create({
     data: {
       email: "jan.nowak@med.app",
       name: "lek. Jan Nowak",
@@ -29,14 +42,51 @@ async function main() {
       doctorProfile: {
         create: {
           specialty: "Neurolog",
-          bio: "Doświadczony neurolog z pasją do diagnostyki i leczenia chorób neurodegeneracyjnych.",
+          bio: "Doświadczony neurolog z pasją do diagnostyki i leczenia chorób neurodegeneracyjnych, takich jak choroba Parkinsona.",
+          photoUrl:
+            "https://images.unsplash.com/photo-1537368910025-70035079f52d?q=80&w=1925&auto=format&fit=crop",
         },
       },
     },
   });
 
-  console.log({ doctorUser1, doctorUser2 });
-  console.log("Seeding zakończony.");
+  // Kardiolodzy
+  await prisma.user.create({
+    data: {
+      email: "piotr.zielinski@med.app",
+      name: "prof. dr hab. Piotr Zieliński",
+      password: "password123",
+      role: "DOCTOR",
+      doctorProfile: {
+        create: {
+          specialty: "Kardiolog",
+          bio: "Kierownik Kliniki Kardiologii. Specjalizuje się w leczeniu nadciśnienia tętniczego i choroby wieńcowej.",
+          photoUrl:
+            "https://images.unsplash.com/photo-1576091160399-112BA7d25d1d?q=80&w=2070&auto=format&fit=crop",
+        },
+      },
+    },
+  });
+
+  // Dermatolodzy
+  await prisma.user.create({
+    data: {
+      email: "maria.wisniewska@med.app",
+      name: "dr Maria Wiśniewska",
+      password: "password123",
+      role: "DOCTOR",
+      doctorProfile: {
+        create: {
+          specialty: "Dermatolog",
+          bio: "Ekspert w dziedzinie dermatologii estetycznej oraz leczenia trądziku i chorób alergicznych skóry.",
+          photoUrl:
+            "https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=1964&auto=format&fit=crop",
+        },
+      },
+    },
+  });
+
+  console.log("Seeding zakończony pomyślnie.");
 }
 
 main()
