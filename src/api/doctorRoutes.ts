@@ -4,8 +4,17 @@ import prisma from "../lib/prisma";
 const router = Router();
 
 router.get("/", async (req: Request, res: Response): Promise<void> => {
+  const specialties = req.query.specialties as string;
+
   try {
     const doctors = await prisma.doctor.findMany({
+      where: specialties
+        ? {
+            specialty: {
+              in: specialties.split(","),
+            },
+          }
+        : {},
       include: {
         user: true,
       },

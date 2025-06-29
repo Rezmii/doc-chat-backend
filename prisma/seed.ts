@@ -6,16 +6,51 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Rozpoczynanie seedingu...");
 
-  // --- KROK 1: Czyszczenie istniejących danych ---
+  // KROK 1: Czyszczenie istniejących danych
   console.log("Czyszczenie bazy danych...");
   await prisma.review.deleteMany();
   await prisma.doctor.deleteMany();
   await prisma.user.deleteMany();
 
-  // --- KROK 2: Dodawanie nowych lekarzy ---
+  // KROK 2: Dodawanie nowych lekarzy
   console.log("Dodawanie nowych lekarzy...");
 
-  // Neurologowie
+  // --- LEKARZE RODZINNI ---
+  await prisma.user.create({
+    data: {
+      email: "tomasz.kowalczyk@med.app",
+      name: "lek. Tomasz Kowalczyk",
+      password: "password123",
+      role: "DOCTOR",
+      doctorProfile: {
+        create: {
+          specialty: "Lekarz Rodzinny",
+          bio: "Lekarz pierwszego kontaktu z 10-letnim doświadczeniem. Zapewnia kompleksową opiekę pacjentom w każdym wieku.",
+          photoUrl:
+            "https://images.unsplash.com/photo-1594824476967-48c8b964273f?q=80&w=1887&auto=format&fit=crop",
+        },
+      },
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      email: "ewa.dabrowska@med.app",
+      name: "lek. Ewa Dąbrowska",
+      password: "password123",
+      role: "DOCTOR",
+      doctorProfile: {
+        create: {
+          specialty: "Lekarz Rodzinny",
+          bio: "Specjalizuje się w profilaktyce zdrowotnej i prowadzeniu pacjentów z chorobami przewlekłymi.",
+          photoUrl:
+            "https://images.unsplash.com/photo-1582750421881-22d71a9385a5?q=80&w=1887&auto=format&fit=crop",
+        },
+      },
+    },
+  });
+
+  // --- NEUROLOGOWIE ---
   await prisma.user.create({
     data: {
       email: "anna.kowalska@med.app",
@@ -50,7 +85,7 @@ async function main() {
     },
   });
 
-  // Kardiolodzy
+  // --- KARDIOLODZY ---
   await prisma.user.create({
     data: {
       email: "piotr.zielinski@med.app",
@@ -68,7 +103,7 @@ async function main() {
     },
   });
 
-  // Dermatolodzy
+  // --- DERMATOLODZY ---
   await prisma.user.create({
     data: {
       email: "maria.wisniewska@med.app",

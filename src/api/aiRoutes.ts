@@ -13,17 +13,24 @@ router.post("/chat", async (req: Request, res: Response): Promise<void> => {
   try {
     const aiMessage = await getAIChatResponse(history);
 
-    let responseText = aiMessage;
-    let recommendationReady = false;
+    if (!aiMessage) {
+      throw new Error("Otrzymano pustą odpowiedź od AI.");
+    }
 
-    if (aiMessage?.includes("[RECOMMENDATION_READY]")) {
-      recommendationReady = true;
-      responseText = aiMessage.replace("[RECOMMENDATION_READY]", "").trim();
+    const recommendationMatch = aiMessage.match(
+      /\[SPECIALIZATIONS:\s*([^\]]+)\]/
+    );
+    let specializations: string[] = [];
+    let responseText = aiMessage;
+
+    if (recommendationMatch && recommendationMatch[1]) {
+      specializations = recommendationMatch[1].split(",").map((s) => s.trim());
+      responseText = aiMessage.replace(recommendationMatch[0], "").trim();
     }
 
     res.json({
       reply: responseText,
-      recommendationReady: recommendationReady,
+      specializations: specializations,
     });
   } catch (error) {
     res.status(500).json({ error: "Błąd po stronie serwera AI." });
