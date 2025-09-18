@@ -7,50 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Model Użytkownika
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  password  String
-  role      Role     @default(PATIENT)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  doctorProfile Doctor?
-
-  reviews Review[]
-}
-
-// Model Lekarza - szczegółowe dane profilowe
-model Doctor {
-  id        String   @id @default(cuid())
-  specialty String
-  bio       String   @db.Text
-  rating    Float    @default(0)
-  reviews   Review[] 
-  photoUrl  String?
-  
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
-}
-
-model Review {
-  id      String   @id @default(cuid())
-  rating  Int
-  comment String   @db.Text
-  
-  doctorId String
-  doctor   Doctor @relation(fields: [doctorId], references: [id])
-  
-  authorId String
-  author   User   @relation(fields: [authorId], references: [id])
-
-  createdAt DateTime @default(now())
-}
-
-enum Role {
-  PATIENT
-  DOCTOR
-  ADMIN
-}
+// Na razie nie potrzebujemy żadnych modeli w bazie danych dla MVP.
+// Zostawiamy plik w tej formie jako punkt wyjścia do Fazy 2,
+// kiedy dodamy model User dla subskrypcji.
