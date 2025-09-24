@@ -42,9 +42,10 @@ export const getAIResponse = async (
     const reply =
       completion.choices[0]?.message?.content || "Przepraszam, wystąpił błąd.";
 
-    if (reply.startsWith(SUMMARY_MARKER)) {
+    if (reply.includes(SUMMARY_MARKER)) {
       const jsonString = reply.substring(SUMMARY_MARKER.length);
       const summary = JSON.parse(jsonString) as AISummary;
+
       return {
         type: "summary",
         content: summary,
