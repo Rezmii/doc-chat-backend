@@ -1,0 +1,23 @@
+export interface AISummary {
+  summary: string;
+  possibleCauses: string[];
+  recommendedSpecialist: string;
+  questionsForDoctor: string[];
+}
+
+export interface Message {
+  id: string;
+  sender: "user" | "ai";
+  isSummary?: boolean;
+  text: string;
+  summaryData?: AISummary;
+}
+
+export interface ApiChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export type AIResponse =
+  | { type: "text"; content: string }
+  | { type: "summary"; content: AISummary };

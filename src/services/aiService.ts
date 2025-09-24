@@ -1,45 +1,62 @@
 import OpenAI from "openai";
+import { ApiChatMessage, AIResponse, AISummary } from "../../types";
 
-// Inicjalizujemy klienta OpenAI, który automatycznie odczyta klucz z .env
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
 const systemPrompt = `
-  Jesteś pomocnym, empatycznym i ostrożnym wirtualnym asystentem medycznym.
-  Twoja rola to przeprowadzenie wstępnego wywiadu z użytkownikiem, aby zasugerować 1 do 3 najbardziej prawdopodobnych specjalizacji lekarskich.
+Jesteś empatycznym i profesjonalnym wirtualnym asystentem medycznym. Twoim celem jest przeprowadzenie wstępnego wywiadu z użytkownikiem.
 
-  Postępuj według następującego procesu myślowego:
-  1.  **Analiza Objawów:** Wysłuchaj użytkownika. Zadawaj doprecyzowujące pytania (jedno na raz), aby zrozumieć: co, gdzie, od kiedy i jak boli/dokucza oraz czy są inne objawy.
-  2.  **Wnioskowanie:** Wewnętrznie zastanów się, które dziedziny medycyny najlepiej pasują do opisywanych objawów.
-  3.  **Generowanie Sugestii:** Kiedy masz wystarczająco dużo danych, wygeneruj krótkie podsumowanie dla użytkownika. Zakończ je ZAWSZE specjalnym znacznikiem w formacie: [SPECIALIZATIONS: Specjalizacja1,Specjalizacja2,...] ale nie pisz nic oprócz tego formatu.
-
-  KLUCZOWE ZASADY:
-  -   **NIGDY NIE DIAGNOZUJ:** Zawsze podkreślaj, że nie jesteś lekarzem i to tylko sugestie. Używaj sformułowań typu "Objawy, które opisujesz, mogą wskazywać na potrzebę konsultacji u...", "Warto byłoby to skonsultować z...".
-  -   **PRECYZJA PONAD WSZYSTKO:** Zawsze staraj się znaleźć najbardziej pasującą, konkretną specjalizację. Unikaj pochopnego sugerowania Lekarza Rodzinnego.
-  -   **UŻYCIE LEKARZA RODZINNEGO:** Sugeruj "[SPECIALIZATIONS: Lekarz Rodzinny]" tylko w dwóch przypadkach:
-      a) Gdy objawy są bardzo ogólne (np. "źle się czuję", "osłabienie") i mimo dopytywania nie da się ich sprecyzować.
-      b) Gdy problem jest typowy dla medycyny rodzinnej (np. przeziębienie, prośba o przedłużenie recepty na stałe leki).
-  -   **WIELE SPECJALIZACJI:** Jeśli objawy są złożone i mogą wskazywać na problemy z różnych dziedzin (np. ból w klatce piersiowej może być kardiologiczny lub neurologiczny), śmiało podaj obie specjalizacje w znaczniku, np. [SPECIALIZATIONS: Kardiolog,Neurolog].
+ZASADY DZIAŁANIA:
+1.  **PROWADŹ WYWIAD:** Zawsze zadawaj tylko JEDNO pytanie na raz.
+2.  **NIE STAWIAJ DIAGNOZY.** Zawsze podkreślaj, że jesteś tylko asystentem AI.
+3.  **ZAKOŃCZENIE WYWIADU:** Po zebraniu wystarczającej ilości informacji (zazwyczaj 3-5 pytań), Twoja ostatnia odpowiedź MUSI zaczynać się od specjalnego znacznika: [SUMMARY_JSON], a zaraz po nim musi następować TYLKO I WYŁĄCZNIE poprawny obiekt JSON.
+4.  **FORMAT JSON:** Obiekt JSON musi mieć DOKŁADNIE taką strukturę:
+    {
+      "summary": "Krótkie, 2-3 zdaniowe podsumowanie zebranych objawów.",
+      "possibleCauses": ["Lista 2-3 możliwych ogólnych przyczyn, np. 'Infekcja wirusowa', 'Przemęczenie'"],
+      "recommendedSpecialist": "Sugerowany typ specjalisty, np. 'Lekarz rodzinny', 'Neurolog'",
+      "questionsForDoctor": ["Lista 3 pytań, które użytkownik może zadać prawdziwemu lekarzowi"]
+    }
+5.  **ZAWSZE odpowiadaj w języku polskim.**
 `;
 
-interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
-}
+const SUMMARY_MARKER = "[SUMMARY_JSON]";
 
-export const getAIChatResponse = async (history: ChatMessage[]) => {
+export const getAIResponse = async (
+  history: ApiChatMessage[]
+): Promise<AIResponse> => {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error("Klucz API OpenAI nie jest skonfigurowany na serwerze.");
+  }
+
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-4o",
       messages: [{ role: "system", content: systemPrompt }, ...history],
+      temperature: 0.5,
+      max_tokens: 500,
     });
 
-    console.log(completion.choices[0].message.content);
+    const reply =
+      completion.choices[0]?.message?.content || "Przepraszam, wystąpił błąd.";
 
-    return completion.choices[0].message.content;
+    if (reply.startsWith(SUMMARY_MARKER)) {
+      const jsonString = reply.substring(SUMMARY_MARKER.length);
+      const summary = JSON.parse(jsonString) as AISummary;
+      return {
+        type: "summary",
+        content: summary,
+      };
+    } else {
+      return {
+        type: "text",
+        content: reply,
+      };
+    }
   } catch (error) {
-    console.error("Błąd podczas komunikacji z OpenAI API:", error);
-    throw new Error("Nie udało się uzyskać odpowiedzi od asystenta AI.");
+    console.error("Błąd podczas komunikacji z OpenAI lub parsowania:", error);
+    throw new Error("Wystąpił błąd podczas przetwarzania zapytania przez AI.");
   }
 };

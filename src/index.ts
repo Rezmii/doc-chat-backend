@@ -4,6 +4,8 @@ import aiRoutes from "./api/aiRoutes";
 const app = express();
 const port = 3001;
 
+app.set("trust proxy", 1);
+
 app.use(express.json());
 
 app.get("/", (req: Request, res: Response) => {
