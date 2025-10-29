@@ -3,6 +3,7 @@ import aiRoutes from "./api/aiRoutes";
 
 const app = express();
 const port = 3001;
+const host = "0.0.0.0";
 
 app.set("trust proxy", 1);
 
