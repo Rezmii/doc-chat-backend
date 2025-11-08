@@ -7,6 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Na razie nie potrzebujemy żadnych modeli w bazie danych dla MVP.
-// Zostawiamy plik w tej formie jako punkt wyjścia do Fazy 2,
-// kiedy dodamy model User dla subskrypcji.
+// Model do śledzenia limitów IP dla użytkowników Freemium
+model IpRateLimit {
+  id        String   @id @default(cuid())
+  ip        String   @unique // Adres IP użytkownika
+  count     Int      @default(0) // Liczba wykonanych wywiadów
+  resetTime DateTime // Data, kiedy licznik ma się zresetować
+}

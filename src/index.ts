@@ -1,11 +1,13 @@
 import express, { Request, Response } from "express";
+import cors from "cors";
 import aiRoutes from "./api/aiRoutes";
 
 const app = express();
 const port = 3001;
-const host = "0.0.0.0";
 
 app.set("trust proxy", 1);
+
+app.use(cors());
 
 app.use(express.json());
 

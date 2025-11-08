@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { ApiChatMessage, AIResponse, AISummary } from "../../types";
+import prisma from "../lib/prisma";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -32,7 +33,6 @@ Obiekt JSON musi mieć DOKŁADNIE taką strukturę:
 
 const SUMMARY_MARKER = "[SUMMARY_JSON]";
 
-const interviewCounts = new Map<string, { count: number; resetTime: number }>();
 const A_MONTH_IN_MS = 30 * 24 * 60 * 60 * 1000;
 const INTERVIEW_LIMIT = 5;
 
@@ -44,12 +44,12 @@ export const getAIResponse = async (
     throw new Error("Klucz API OpenAI nie jest skonfigurowany na serwerze.");
   }
 
-  const now = Date.now();
-  let userData = interviewCounts.get(ip);
+  const now = new Date();
+  let userData = await prisma.ipRateLimit.findUnique({ where: { ip } });
 
   if (userData && now >= userData.resetTime) {
-    interviewCounts.delete(ip);
-    userData = undefined;
+    await prisma.ipRateLimit.delete({ where: { ip } });
+    userData = null;
   }
 
   if (userData && userData.count >= INTERVIEW_LIMIT) {
@@ -74,12 +74,21 @@ export const getAIResponse = async (
         const summary = JSON.parse(jsonString) as AISummary;
 
         if (!userData) {
-          interviewCounts.set(ip, { count: 1, resetTime: now + A_MONTH_IN_MS });
+          await prisma.ipRateLimit.create({
+            data: {
+              ip: ip,
+              count: 1,
+              resetTime: new Date(now.getTime() + A_MONTH_IN_MS),
+            },
+          });
         } else {
-          userData.count++;
+          await prisma.ipRateLimit.update({
+            where: { ip },
+            data: { count: { increment: 1 } },
+          });
         }
 
-        console.log(userData, interviewCounts);
+        console.log(userData);
 
         return {
           type: "summary",
